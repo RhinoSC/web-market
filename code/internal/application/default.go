@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/rhinosc/web-market/code/internal"
 	"github.com/rhinosc/web-market/code/internal/handler"
 	"github.com/rhinosc/web-market/code/internal/repository"
 	"github.com/rhinosc/web-market/code/internal/service"
@@ -21,7 +20,10 @@ func NewDefaultHTTP(addr string) *DefaultHTTP {
 }
 
 func (d *DefaultHTTP) Run() (err error) {
-	rp := repository.NewProductRepository(make(map[int]*internal.Product), 0)
+
+	st := repository.NewStorageProductJSON("products1.json", "02/01/2006")
+	// rp := repository.NewProductRepository(make(map[int]*internal.Product), 0)
+	rp := repository.NewProductStore(*st, 0, "02/01/2006")
 
 	sv := service.NewProductDefault(rp)
 
