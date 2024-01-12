@@ -37,7 +37,12 @@ func (d *DefaultHTTP) Run() (err error) {
 		r.Get("/", hd.GetAll())
 		r.Get("/{id}", hd.GetByID())
 		r.Get("/search", hd.Search())
+
 		r.Post("/", hd.Create())
+
+		r.Put("/{id}", hd.UpdateOrCreate())
+		r.Patch("/{id}", hd.Update())
+		r.Delete("/{id}", hd.Delete())
 	})
 
 	//run http server

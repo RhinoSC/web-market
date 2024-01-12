@@ -62,6 +62,47 @@ func (p *ProductDefault) Create(product *internal.Product) (err error) {
 	return
 }
 
+func (p *ProductDefault) UpdateOrCreate(product *internal.Product) (prod internal.Product, err error) {
+	if err = Validate(product); err != nil {
+		return
+	}
+
+	prod, err = p.rp.UpdateOrCreate(product)
+	if err != nil {
+		switch err {
+		case internal.ErrProductNotFound:
+			err = fmt.Errorf("%w: id", internal.ErrProductNotFound)
+		}
+	}
+	return
+}
+
+func (p *ProductDefault) Update(product *internal.Product) (err error) {
+	if err = Validate(product); err != nil {
+		return
+	}
+
+	err = p.rp.Update(product)
+	if err != nil {
+		switch err {
+		case internal.ErrProductNotFound:
+			err = fmt.Errorf("%w: id", internal.ErrProductNotFound)
+		}
+	}
+	return
+}
+
+func (p *ProductDefault) Delete(id int) (err error) {
+	err = p.rp.Delete(id)
+	if err != nil {
+		switch err {
+		case internal.ErrProductNotFound:
+			err = fmt.Errorf("%w: id", internal.ErrProductNotFound)
+		}
+	}
+	return
+}
+
 func Validate(p *internal.Product) (err error) {
 	// required fields
 	if (*p).Name == "" {

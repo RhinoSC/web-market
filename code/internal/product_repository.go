@@ -15,4 +15,13 @@ type ProductRepository interface {
 
 	// Creates a new product
 	Create(product *Product) (err error)
+
+	// Updates a product
+	UpdateOrCreate(product *Product) (prod Product, err error)
+
+	// Updates a product
+	Update(product *Product) (err error)
+
+	// Deletes a product
+	Delete(id int) (err error)
 }

@@ -44,6 +44,41 @@ func (p *ProductMap) Create(product *internal.Product) (err error) {
 	return
 }
 
+func (p *ProductMap) UpdateOrCreate(product *internal.Product) (prod internal.Product, err error) {
+	_, ok := (*p).db[product.Id]
+	switch ok {
+	case true:
+		//update
+		(*p).db[product.Id] = product
+	case false:
+		//create
+		(*p).lastID++
+		(*p).db[(*p).lastID] = product
+	}
+	prod = *product
+	return
+}
+
+func (p *ProductMap) Update(product *internal.Product) (err error) {
+	_, ok := (*p).db[product.Id]
+	if !ok {
+		err = fmt.Errorf("%w: id", internal.ErrProductNotFound)
+		return
+	}
+	(*p).db[product.Id] = product
+	return
+}
+
+func (p *ProductMap) Delete(id int) (err error) {
+	_, ok := (*p).db[id]
+	if !ok {
+		err = fmt.Errorf("%w: id", internal.ErrProductNotFound)
+		return
+	}
+	delete((*p).db, id)
+	return
+}
+
 type ProductJSON struct {
 	Id           int     `json:"id"`
 	Name         string  `json:"name"`

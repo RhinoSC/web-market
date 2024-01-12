@@ -3,12 +3,15 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rhinosc/web-market/code/internal"
+	"github.com/rhinosc/web-market/code/platform/web/request"
 	"github.com/rhinosc/web-market/code/platform/web/response"
 )
 
@@ -220,4 +223,217 @@ func (p *DefaultProducts) Create() http.HandlerFunc {
 			"data":    product,
 		})
 	}
+}
+
+// Update updates a product
+func (p *DefaultProducts) UpdateOrCreate() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		//request
+
+		//get id from urlparams with chi
+		id, err := strconv.Atoi(chi.URLParam(r, "id"))
+		if err != nil {
+			response.Text(w, http.StatusBadRequest, "invalid id")
+			return
+		}
+
+		bytes, err := io.ReadAll(r.Body)
+		if err != nil {
+			response.Text(w, http.StatusBadRequest, "invalid body")
+			return
+		}
+
+		var BodyMap map[string]any
+		if err = json.Unmarshal(bytes, &BodyMap); err != nil {
+			response.Text(w, http.StatusBadRequest, "invalid body")
+			return
+		}
+
+		if err = ValidateKeyExistance(BodyMap, "name", "quantity", "code_value", "is_published", "expiration", "price"); err != nil {
+			response.Text(w, http.StatusBadRequest, "invalid body")
+			return
+		}
+
+		//decode body to json
+		var body BodyProductJSON
+		if err = json.Unmarshal(bytes, &body); err != nil {
+			response.Text(w, http.StatusBadRequest, "invalid body")
+			return
+		}
+
+		//process
+		exp, err := time.Parse("02/01/2006", body.Expiration)
+		if err != nil {
+
+			code := http.StatusBadRequest
+			response.JSON(w, code, map[string]any{
+				"message": "invalid expiration",
+				"data":    nil,
+			})
+			return
+		}
+
+		product := internal.Product{
+			Id:           id,
+			Name:         body.Name,
+			Quantity:     body.Quantity,
+			Code_value:   body.Code_value,
+			Is_published: body.Is_published,
+			Expiration:   exp,
+			Price:        body.Price,
+		}
+		prod, err := p.sv.UpdateOrCreate(&product)
+		if err != nil {
+			switch {
+			case errors.Is(err, internal.ErrFieldRequired):
+				response.Text(w, http.StatusBadRequest, "Field required")
+			case errors.Is(err, internal.ErrValidateQualityField):
+				response.Text(w, http.StatusBadRequest, "Invalid expiration")
+			default:
+				response.Text(w, http.StatusInternalServerError, "Internal Server Error")
+			}
+			return
+		}
+
+		data := ProductJSON{
+			Id:           prod.Id,
+			Name:         prod.Name,
+			Quantity:     prod.Quantity,
+			Code_value:   prod.Code_value,
+			Is_published: prod.Is_published,
+			Expiration:   prod.Expiration.Format("2006-01-02"),
+			Price:        prod.Price,
+		}
+
+		//response
+		response.JSON(w, http.StatusOK, map[string]any{
+			"message": "success",
+			"data":    data,
+		})
+	}
+}
+
+func (p *DefaultProducts) Update() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		//request
+
+		//get id from urlparams with chi
+		id, err := strconv.Atoi(chi.URLParam(r, "id"))
+		if err != nil {
+			response.Text(w, http.StatusBadRequest, "invalid id")
+			return
+		}
+
+		//get product from database
+		product, err := p.sv.GetByID(id)
+		if err != nil {
+			switch err {
+			case internal.ErrProductNotFound:
+				response.Text(w, http.StatusNotFound, "Product not found")
+			default:
+				response.Text(w, http.StatusInternalServerError, "Internal Server Error")
+			}
+			return
+		}
+
+		//process
+
+		//serialize product to json
+		reqBody := BodyProductJSON{
+			Name:         product.Name,
+			Quantity:     product.Quantity,
+			Code_value:   product.Code_value,
+			Is_published: product.Is_published,
+			Expiration:   product.Expiration.Format("2006-01-02"),
+			Price:        product.Price,
+		}
+
+		//get body
+
+		if err = request.JSON(r, &reqBody); err != nil {
+			fmt.Println("aqui")
+			response.Text(w, http.StatusBadRequest, "invalid body")
+			return
+		}
+
+		//update product
+		expiration, err := time.Parse("2006-01-02", reqBody.Expiration)
+		if err != nil {
+			response.Text(w, http.StatusBadRequest, "Invalid expiration")
+			return
+		}
+
+		product = &internal.Product{
+			Id:           id,
+			Name:         reqBody.Name,
+			Quantity:     reqBody.Quantity,
+			Code_value:   reqBody.Code_value,
+			Is_published: reqBody.Is_published,
+			Expiration:   expiration,
+			Price:        reqBody.Price,
+		}
+
+		if err = p.sv.Update(product); err != nil {
+			response.Text(w, http.StatusInternalServerError, "Internal Server Error")
+			return
+		}
+
+		//response
+		//deserialize product to json
+		data := ProductJSON{
+			Id:           id,
+			Name:         product.Name,
+			Quantity:     product.Quantity,
+			Code_value:   product.Code_value,
+			Is_published: product.Is_published,
+			Expiration:   product.Expiration.Format("2006-01-02"),
+			Price:        product.Price,
+		}
+
+		response.JSON(w, http.StatusOK, map[string]any{
+			"message": "success",
+			"data":    data,
+		})
+
+	}
+}
+
+func (p *DefaultProducts) Delete() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		//request
+
+		//get id from urlparams with chi
+		id, err := strconv.Atoi(chi.URLParam(r, "id"))
+		if err != nil {
+			response.Text(w, http.StatusBadRequest, "invalid id")
+			return
+		}
+
+		//process
+		err = p.sv.Delete(id)
+		if err != nil {
+			switch err {
+			case internal.ErrProductNotFound:
+				response.Text(w, http.StatusNotFound, "Product not found")
+			default:
+				response.Text(w, http.StatusInternalServerError, "Internal Server Error")
+			}
+			return
+		}
+
+		//response
+		response.JSON(w, http.StatusOK, map[string]any{
+			"message": "success",
+			"data":    nil,
+		})
+	}
+}
+
+func ValidateKeyExistance(m map[string]any, keys ...string) (err error) {
+	for _, key := range keys {
+		if _, ok := m[key]; !ok {
+			return fmt.Errorf("key %s not found", key)
+		}
+	}
+	return
 }
