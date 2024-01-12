@@ -19,7 +19,7 @@ func NewProductRepository(db map[int]*internal.Product, lastID int) *ProductMap 
 		db:     db,
 		lastID: lastID,
 	}
-	pMap.ReadProducts()
+	// pMap.ReadProducts()
 	return pMap
 }
 

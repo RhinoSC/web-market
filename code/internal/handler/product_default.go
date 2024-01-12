@@ -72,7 +72,7 @@ func (p *DefaultProducts) GetAll() http.HandlerFunc {
 				Quantity:     products.Quantity,
 				Code_value:   products.Code_value,
 				Is_published: products.Is_published,
-				Expiration:   products.Expiration.Format("2006-01-02"),
+				Expiration:   products.Expiration.Format("02/01/2006"),
 				Price:        products.Price,
 			}
 			data = append(data, pJSON)
@@ -116,7 +116,7 @@ func (p *DefaultProducts) GetByID() http.HandlerFunc {
 			Quantity:     product.Quantity,
 			Code_value:   product.Code_value,
 			Is_published: product.Is_published,
-			Expiration:   product.Expiration.Format("2006-01-02"),
+			Expiration:   product.Expiration.Format("02/01/2006"),
 			Price:        product.Price,
 		}
 
@@ -161,7 +161,7 @@ func (p *DefaultProducts) Search() http.HandlerFunc {
 				Quantity:     products.Quantity,
 				Code_value:   products.Code_value,
 				Is_published: products.Is_published,
-				Expiration:   products.Expiration.Format("2006-01-02"),
+				Expiration:   products.Expiration.Format("02/01/2006"),
 				Price:        products.Price,
 			}
 			data = append(data, pJSON)
@@ -211,6 +211,7 @@ func (p *DefaultProducts) Create() http.HandlerFunc {
 			Expiration:   exp,
 			Price:        body.Price,
 		}
+
 		err = p.sv.Create(&product)
 		if err != nil {
 			switch {
@@ -224,10 +225,20 @@ func (p *DefaultProducts) Create() http.HandlerFunc {
 			return
 		}
 
+		data := ProductJSON{
+			Id:           product.Id,
+			Name:         product.Name,
+			Quantity:     product.Quantity,
+			Code_value:   product.Code_value,
+			Is_published: product.Is_published,
+			Expiration:   product.Expiration.Format("02/01/2006"),
+			Price:        product.Price,
+		}
+
 		//response
 		response.JSON(w, http.StatusCreated, map[string]any{
 			"message": "success",
-			"data":    product,
+			"data":    data,
 		})
 	}
 }
@@ -314,7 +325,7 @@ func (p *DefaultProducts) UpdateOrCreate() http.HandlerFunc {
 			Quantity:     prod.Quantity,
 			Code_value:   prod.Code_value,
 			Is_published: prod.Is_published,
-			Expiration:   prod.Expiration.Format("2006-01-02"),
+			Expiration:   prod.Expiration.Format("02/01/2006"),
 			Price:        prod.Price,
 		}
 
@@ -362,7 +373,7 @@ func (p *DefaultProducts) Update() http.HandlerFunc {
 			Quantity:     product.Quantity,
 			Code_value:   product.Code_value,
 			Is_published: product.Is_published,
-			Expiration:   product.Expiration.Format("2006-01-02"),
+			Expiration:   product.Expiration.Format("02/01/2006"),
 			Price:        product.Price,
 		}
 
@@ -375,7 +386,7 @@ func (p *DefaultProducts) Update() http.HandlerFunc {
 		}
 
 		//update product
-		expiration, err := time.Parse("2006-01-02", reqBody.Expiration)
+		expiration, err := time.Parse("02/01/2006", reqBody.Expiration)
 		if err != nil {
 			response.Text(w, http.StatusBadRequest, "Invalid expiration")
 			return
@@ -404,7 +415,7 @@ func (p *DefaultProducts) Update() http.HandlerFunc {
 			Quantity:     product.Quantity,
 			Code_value:   product.Code_value,
 			Is_published: product.Is_published,
-			Expiration:   product.Expiration.Format("2006-01-02"),
+			Expiration:   product.Expiration.Format("02/01/2006"),
 			Price:        product.Price,
 		}
 
@@ -445,7 +456,7 @@ func (p *DefaultProducts) Delete() http.HandlerFunc {
 		}
 
 		//response
-		response.JSON(w, http.StatusOK, map[string]any{
+		response.JSON(w, http.StatusNoContent, map[string]any{
 			"message": "success",
 			"data":    nil,
 		})
