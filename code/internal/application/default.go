@@ -21,7 +21,7 @@ func NewDefaultHTTP(addr string) *DefaultHTTP {
 }
 
 func (d *DefaultHTTP) Run() (err error) {
-	rp := repository.NewProductRepository(make(map[int]internal.Product))
+	rp := repository.NewProductRepository(make(map[int]*internal.Product), 0)
 
 	sv := service.NewProductDefault(rp)
 
@@ -36,6 +36,8 @@ func (d *DefaultHTTP) Run() (err error) {
 	rt.Route("/products", func(r chi.Router) {
 		r.Get("/", hd.GetAll())
 		r.Get("/{id}", hd.GetByID())
+		r.Get("/search", hd.Search())
+		r.Post("/", hd.Create())
 	})
 
 	//run http server
