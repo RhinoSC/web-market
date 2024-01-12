@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -177,6 +178,12 @@ func (p *DefaultProducts) Create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		//request
 
+		token := r.Header.Get("Authorization")
+		if token != os.Getenv("TOKEN") {
+			response.Text(w, http.StatusUnauthorized, "unauthorized")
+			return
+		}
+
 		//decode body to json
 		var body BodyProductJSON
 		err := json.NewDecoder(r.Body).Decode(&body)
@@ -229,6 +236,12 @@ func (p *DefaultProducts) Create() http.HandlerFunc {
 func (p *DefaultProducts) UpdateOrCreate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		//request
+
+		token := r.Header.Get("Authorization")
+		if token != os.Getenv("TOKEN") {
+			response.Text(w, http.StatusUnauthorized, "unauthorized")
+			return
+		}
 
 		//get id from urlparams with chi
 		id, err := strconv.Atoi(chi.URLParam(r, "id"))
@@ -316,6 +329,11 @@ func (p *DefaultProducts) UpdateOrCreate() http.HandlerFunc {
 func (p *DefaultProducts) Update() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		//request
+		token := r.Header.Get("Authorization")
+		if token != os.Getenv("TOKEN") {
+			response.Text(w, http.StatusUnauthorized, "unauthorized")
+			return
+		}
 
 		//get id from urlparams with chi
 		id, err := strconv.Atoi(chi.URLParam(r, "id"))
@@ -401,6 +419,11 @@ func (p *DefaultProducts) Update() http.HandlerFunc {
 func (p *DefaultProducts) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		//request
+		token := r.Header.Get("Authorization")
+		if token != os.Getenv("TOKEN") {
+			response.Text(w, http.StatusUnauthorized, "unauthorized")
+			return
+		}
 
 		//get id from urlparams with chi
 		id, err := strconv.Atoi(chi.URLParam(r, "id"))
