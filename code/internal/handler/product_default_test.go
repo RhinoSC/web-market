@@ -3,6 +3,7 @@ package handler_test
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -246,5 +247,119 @@ func TestProductDefault_GetAll(t *testing.T) {
 
 		require.Equal(t, expectedCode, res.Code)
 		require.Equal(t, expectedHeader, res.Header().Get("Content-Type"))
+	})
+
+	t.Run("fail 01 - should return not found when trying to get a product by id", func(t *testing.T) {
+		// arrange
+		db := make(map[int]*internal.Product)
+		rp := repository.NewProductRepository(db, 0)
+		sv := service.NewProductDefault(rp)
+		hd := handler.NewDefaultProducts(sv)
+
+		hdFunc := hd.GetByID()
+
+		// act
+
+		req := httptest.NewRequest("GET", "/products/1", nil)
+		chiCtx := chi.NewRouteContext()
+		chiCtx.URLParams.Add("id", "1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, chiCtx))
+		res := httptest.NewRecorder()
+
+		hdFunc(res, req)
+
+		var response string
+		bodyBytes, err := io.ReadAll(res.Body)
+		if err != nil {
+			t.Fatalf("Error reading response body: %v", err)
+		}
+		response = string(bodyBytes)
+
+		// body, err := json.Marshal(response)
+		// if err != nil {
+		// 	t.Fatalf("Error converting 'data' to JSON: %v", err)
+		// }
+
+		// assert
+
+		expectedCode := http.StatusNotFound
+		expectedHeader := "text/plain; charset=utf-8"
+
+		require.Equal(t, expectedCode, res.Code)
+		require.Equal(t, expectedHeader, res.Header().Get("Content-Type"))
+		require.Equal(t, `Product not found`, response)
+	})
+
+	t.Run("fail 02 - should return not found when trying to delete a product", func(t *testing.T) {
+		// arrange
+		db := make(map[int]*internal.Product)
+		rp := repository.NewProductRepository(db, 0)
+		sv := service.NewProductDefault(rp)
+		hd := handler.NewDefaultProducts(sv)
+
+		hdFunc := hd.Delete()
+
+		// act
+
+		req := httptest.NewRequest("DELETE", "/products/1", nil)
+		req.Header.Set("Authorization", "12345")
+		chiCtx := chi.NewRouteContext()
+		chiCtx.URLParams.Add("id", "1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, chiCtx))
+		res := httptest.NewRecorder()
+
+		hdFunc(res, req)
+
+		var response string
+		bodyBytes, err := io.ReadAll(res.Body)
+		if err != nil {
+			t.Fatalf("Error reading response body: %v", err)
+		}
+		response = string(bodyBytes)
+
+		// assert
+
+		expectedCode := http.StatusNotFound
+		expectedHeader := "text/plain; charset=utf-8"
+
+		require.Equal(t, expectedCode, res.Code)
+		require.Equal(t, expectedHeader, res.Header().Get("Content-Type"))
+		require.Equal(t, `Product not found`, response)
+	})
+
+	t.Run("fail 03 - should return bad request when trying to get a product with invalid id", func(t *testing.T) {
+		// arrange
+		db := make(map[int]*internal.Product)
+		rp := repository.NewProductRepository(db, 0)
+		sv := service.NewProductDefault(rp)
+		hd := handler.NewDefaultProducts(sv)
+
+		hdFunc := hd.GetByID()
+
+		// act
+
+		req := httptest.NewRequest("GET", "/products/A1", nil)
+		chiCtx := chi.NewRouteContext()
+		chiCtx.URLParams.Add("id", "A1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, chiCtx))
+		res := httptest.NewRecorder()
+
+		hdFunc(res, req)
+
+		var response string
+		bodyBytes, err := io.ReadAll(res.Body)
+		if err != nil {
+			t.Fatalf("Error reading response body: %v", err)
+		}
+		response = string(bodyBytes)
+
+		// assert
+
+		expectedCode := http.StatusBadRequest
+		expectedHeader := "text/plain; charset=utf-8"
+
+		require.Equal(t, expectedCode, res.Code)
+		require.Equal(t, expectedHeader, res.Header().Get("Content-Type"))
+		require.Equal(t, `invalid id`, response)
 	})
 }

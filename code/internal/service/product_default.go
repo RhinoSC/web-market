@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"time"
@@ -25,8 +26,8 @@ func (p *ProductDefault) GetAll() (products map[int]*internal.Product, err error
 func (p *ProductDefault) GetByID(id int) (product *internal.Product, err error) {
 	product, err = p.rp.GetByID(id)
 	if err != nil {
-		switch err {
-		case internal.ErrProductNotFound:
+		switch {
+		case errors.Is(err, internal.ErrProductNotFound):
 			err = fmt.Errorf("%w: id", internal.ErrProductNotFound)
 		}
 		return
@@ -69,8 +70,8 @@ func (p *ProductDefault) UpdateOrCreate(product *internal.Product) (prod interna
 
 	prod, err = p.rp.UpdateOrCreate(product)
 	if err != nil {
-		switch err {
-		case internal.ErrProductNotFound:
+		switch {
+		case errors.Is(err, internal.ErrProductNotFound):
 			err = fmt.Errorf("%w: id", internal.ErrProductNotFound)
 		}
 	}
@@ -84,8 +85,8 @@ func (p *ProductDefault) Update(product *internal.Product) (err error) {
 
 	err = p.rp.Update(product)
 	if err != nil {
-		switch err {
-		case internal.ErrProductNotFound:
+		switch {
+		case errors.Is(err, internal.ErrProductNotFound):
 			err = fmt.Errorf("%w: id", internal.ErrProductNotFound)
 		}
 	}
@@ -95,8 +96,8 @@ func (p *ProductDefault) Update(product *internal.Product) (err error) {
 func (p *ProductDefault) Delete(id int) (err error) {
 	err = p.rp.Delete(id)
 	if err != nil {
-		switch err {
-		case internal.ErrProductNotFound:
+		switch {
+		case errors.Is(err, internal.ErrProductNotFound):
 			err = fmt.Errorf("%w: id", internal.ErrProductNotFound)
 		}
 	}

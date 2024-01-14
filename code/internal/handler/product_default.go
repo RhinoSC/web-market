@@ -53,8 +53,8 @@ func (p *DefaultProducts) GetAll() http.HandlerFunc {
 		//process
 		products, err := p.sv.GetAll()
 		if err != nil {
-			switch err {
-			case internal.ErrProductNotFound:
+			switch {
+			case errors.Is(err, internal.ErrProductNotFound):
 				response.Text(w, http.StatusNotFound, "Product not found")
 			default:
 				response.Text(w, http.StatusInternalServerError, "Internal Server Error")
@@ -99,8 +99,8 @@ func (p *DefaultProducts) GetByID() http.HandlerFunc {
 		//process
 		product, err := p.sv.GetByID(id)
 		if err != nil {
-			switch err {
-			case internal.ErrProductNotFound:
+			switch {
+			case errors.Is(err, internal.ErrProductNotFound):
 				response.Text(w, http.StatusNotFound, "Product not found")
 			default:
 				response.Text(w, http.StatusInternalServerError, "Internal Server Error")
@@ -142,8 +142,8 @@ func (p *DefaultProducts) Search() http.HandlerFunc {
 		//process
 		products, err := p.sv.SearchByPrice(float64(price))
 		if err != nil {
-			switch err {
-			case internal.ErrProductNotFound:
+			switch {
+			case errors.Is(err, internal.ErrProductNotFound):
 				response.Text(w, http.StatusNotFound, "Product not found")
 			default:
 				response.Text(w, http.StatusInternalServerError, "Internal Server Error")
@@ -356,8 +356,8 @@ func (p *DefaultProducts) Update() http.HandlerFunc {
 		//get product from database
 		product, err := p.sv.GetByID(id)
 		if err != nil {
-			switch err {
-			case internal.ErrProductNotFound:
+			switch {
+			case errors.Is(err, internal.ErrProductNotFound):
 				response.Text(w, http.StatusNotFound, "Product not found")
 			default:
 				response.Text(w, http.StatusInternalServerError, "Internal Server Error")
@@ -446,8 +446,8 @@ func (p *DefaultProducts) Delete() http.HandlerFunc {
 		//process
 		err = p.sv.Delete(id)
 		if err != nil {
-			switch err {
-			case internal.ErrProductNotFound:
+			switch {
+			case errors.Is(err, internal.ErrProductNotFound):
 				response.Text(w, http.StatusNotFound, "Product not found")
 			default:
 				response.Text(w, http.StatusInternalServerError, "Internal Server Error")
