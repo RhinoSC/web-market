@@ -2,8 +2,11 @@ package application
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/rhinosc/web-market/code/internal/auth"
+	"github.com/rhinosc/web-market/code/internal/auth/middleware"
 	"github.com/rhinosc/web-market/code/internal/handler"
 	"github.com/rhinosc/web-market/code/internal/repository"
 	"github.com/rhinosc/web-market/code/internal/service"
@@ -31,6 +34,11 @@ func (d *DefaultHTTP) Run() (err error) {
 
 	rt := chi.NewRouter()
 
+	au := auth.NewAuthTokenBasic(os.Getenv("TOKEN"))
+	auMD := middleware.NewAuthenticator(au)
+
+	rt.Use(auMD.Auth)
+
 	rt.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("pong"))
 	})
@@ -41,7 +49,6 @@ func (d *DefaultHTTP) Run() (err error) {
 		r.Get("/search", hd.Search())
 
 		r.Post("/", hd.Create())
-
 		r.Put("/{id}", hd.UpdateOrCreate())
 		r.Patch("/{id}", hd.Update())
 		r.Delete("/{id}", hd.Delete())
